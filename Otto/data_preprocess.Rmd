@@ -1,0 +1,16 @@
+---
+title: "data_preprocess"
+author: "ajing"
+date: "05/06/2015"
+output: html_document
+---
+
+Import data
+```{r}
+summary(cars)
+```
+
+Basic summary and plot
+```{r, echo=FALSE}
+plot(cars)
+```
