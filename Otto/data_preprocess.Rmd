@@ -7,7 +7,17 @@ output: html_document
 
 Import data
 ```{r}
-summary(cars)
+library(readr)
+
+train_data <- read_csv("./Data/train.csv")
+test_data  <- read_csv("./Data/test.csv")
+
+submission <- data.frame(id=test$id, Class_1=NA, Class_2=NA, Class_3=NA, Class_4=NA, Class_5=NA, Class_6=NA, Class_7=NA, Class_8=NA, Class_9=NA)
+classes <- colnames(submission)[c(-1)]
+
+train.features <- train[,c(-1,-95)]
+train.class <- as.factor(train$target)
+test.features <- test[,c(-1,-95)]
 ```
 
 Basic summary and plot
