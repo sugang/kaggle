@@ -7,10 +7,61 @@ output: html_document
 
 Import data
 ```{r}
-summary(cars)
+library(readr)
+train_data <- read_csv("./Data/train.csv")
+test_data <- read_csv("./Data/test.csv")
 ```
 
 Basic summary and plot
-```{r, echo=FALSE}
-plot(cars)
+```{r}
+summary(train_data)
+boxplot(x = subset(train_data, select = -c(id, target)), las=2)
+summary(test_data)
+boxplot(x = subset(test_data, select = -c(id)))
 ```
+
+PCA analysis
+```{r}
+train_pca <- prcomp(subset(train_data, select = -c(id, target)), center = TRUE, scale = TRUE) 
+summary(train_pca)
+plot(train_pca)
+biplot(train_pca,choices=c(1,2),cex=0.5, main = "Train data biplot")
+
+
+train_pca <- prcomp(subset(train_data, select = -c(id, target)), center = TRUE, scale = TRUE) 
+summary(train_pca)
+plot(train_pca)
+biplot(train_pca,choices=c(1,2),cex=0.5, main = "Train data biplot")
+```
+
+Correlation between individuals
+```{r, echo=FALSE}
+library("gplots")
+heatmap.2(as.matrix(subset(train_data, select = -c(id, target))), scale="column")
+```
+
+Logistic model for variable selection
+```{r}
+model <- lm(target ~ .,data = train_data, select = -c(id))))
+summary(model)
+```
+
+
+Feature selection with Boruta
+```{r}
+library(Boruta)
+important <- Boruta(revenue~., data=subset(train_data, select = !(names(train_data) %in% c("Id", "City"))),  doTrace = 2, ntree = 300)
+names(train_data[, c(important$finalDecision != "Rejected", T)])
+plot(important)
+plotZHistory(important)
+important_fix <- TentativeRoughFix(important)
+print(important_fix)
+```
+
+
+```{r}
+#library(caret)
+#highCorr <- findCorrelation(descrCorr, 0.90)
+#print(highCorr)
+```
+
