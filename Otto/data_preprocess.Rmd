@@ -7,17 +7,21 @@ output: html_document
 
 Import data
 ```{r}
-library(readr)
-train_data <- read_csv("./Data/train.csv")
-test_data  <- read_csv("./Data/test.csv")
+#library(readr)
+#train_data <- read_csv("./Data/train.csv")
+#test_data  <- read_csv("./Data/test.csv")
+train_data <- read.csv("./Data/train.csv")
+test_data  <- read.csv("./Data/test.csv")
 ```
 
 Basic summary and plot
 ```{r}
 summary(train_data)
+windows.options(width=50, height=10)
 boxplot(x = subset(train_data, select = -c(id, target)), las=2)
 summary(test_data)
 boxplot(x = subset(test_data, select = -c(id)))
+windows.options(reset=TRUE)
 ```
 
 PCA analysis
@@ -28,10 +32,13 @@ plot(train_pca)
 biplot(train_pca,choices=c(1,2),cex=0.5, main = "Train data biplot")
 
 
-train_pca <- prcomp(subset(train_data, select = -c(id, target)), center = TRUE, scale = TRUE) 
-summary(train_pca)
-plot(train_pca)
-biplot(train_pca,choices=c(1,2),cex=0.5, main = "Train data biplot")
+test_pca <- prcomp(subset(test_data, select = -c(id)), center = TRUE, scale = TRUE) 
+summary(test_pca)
+plot(test_pca)
+biplot(test_pca,choices=c(1,2),cex=0.5, main = "Test data biplot")
+
+rm(train_pca)
+rm(test_pca)
 ```
 
 Correlation between individuals
@@ -42,15 +49,15 @@ heatmap.2(as.matrix(subset(train_data, select = -c(id, target))), scale="column"
 
 Logistic model for variable selection
 ```{r}
-model <- lm(target ~ .,data = train_data, select = -c(id))))
-summary(model)
+#model <- lm(target ~ .,data = subset(train_data, select = -c(id)))
+#summary(model)
 ```
 
 
 Feature selection with Boruta
 ```{r}
 library(Boruta)
-important <- Boruta(revenue~., data=subset(train_data, select = !(names(train_data) %in% c("Id", "City"))),  doTrace = 2, ntree = 300)
+important <- Boruta(target~., data=subset(train_data, select = !(names(train_data) %in% c("Id", "City"))),  doTrace = 2, ntree = 300)
 names(train_data[, c(important$finalDecision != "Rejected", T)])
 plot(important)
 plotZHistory(important)
