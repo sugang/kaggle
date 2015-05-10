@@ -30,21 +30,16 @@ train_pca <- prcomp(subset(train_data, select = -c(id, target)), center = TRUE, 
 summary(train_pca)
 plot(train_pca)
 biplot(train_pca,choices=c(1,2),cex=0.5, main = "Train data biplot")
-
+barplot(train_pca$rotation[,"PC1"])
 
 test_pca <- prcomp(subset(test_data, select = -c(id)), center = TRUE, scale = TRUE) 
 summary(test_pca)
 plot(test_pca)
 biplot(test_pca,choices=c(1,2),cex=0.5, main = "Test data biplot")
+barplot(test_pca$rotation[,"PC1"])
 
 rm(train_pca)
 rm(test_pca)
-```
-
-Correlation between individuals
-```{r, echo=FALSE}
-library("gplots")
-heatmap.2(as.matrix(subset(train_data, select = -c(id, target))), scale="column")
 ```
 
 Logistic model for variable selection
