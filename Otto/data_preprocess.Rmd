@@ -57,8 +57,8 @@ Logistic model for variable selection
 Feature selection with Boruta
 ```{r}
 library(Boruta)
-important <- Boruta(target~., data=subset(train_data, select = !(names(train_data) %in% c("Id", "City"))),  doTrace = 2, ntree = 300)
-names(train_data[, c(important$finalDecision != "Rejected", T)])
+important <- Boruta(target~., data=subset(train_data, select = -c(id)),  doTrace = 2, ntree = 300)
+names(subset(train_data, select = -c(id))[, c(important$finalDecision != "Rejected", T)])
 plot(important)
 plotZHistory(important)
 important_fix <- TentativeRoughFix(important)
