@@ -1,0 +1,38 @@
+---
+title: "data_preprocess"
+author: "ajing"
+date: "05/06/2015"
+output: html_document
+---
+
+Import data
+```{r}
+train_data <- read.csv("./Data/train.csv")
+test_data  <- read.csv("./Data/test.csv")
+```
+Feature selection with Boruta
+```{r}
+library(Boruta)
+important <- Boruta(target~., data=subset(train_data, select = -c(id)),  doTrace = 2, ntree = 300)
+names(important$finalDecision[c(important$finalDecision != "Rejected", T)])
+plot(important)
+```
+
+```{r}
+library(corrplot)
+M <- cor(subset(train_data, select = -c(id, target)))
+corrplot(M, order = "hclust", type = "upper")
+```
+
+```{r}
+library(caret)
+highCorr <- findCorrelation(M, 0.90)
+print(highCorr)
+```
+
+```{r}
+library("randomForest")
+model <- randomForest(target~.,data=subset(train_data, select = -c(id)), importance = T, ntree = 200)
+
+```
+
