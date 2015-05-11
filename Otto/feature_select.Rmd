@@ -14,19 +14,25 @@ Feature selection with Boruta
 ```{r}
 library(Boruta)
 important <- Boruta(target~., data=subset(train_data, select = -c(id)),  doTrace = 2, ntree = 300)
-names(important$finalDecision[, c(important$finalDecision != "Rejected", T)])
+names(important$finalDecision[c(important$finalDecision != "Rejected", T)])
 plot(important)
 ```
 
 ```{r}
 library(corrplot)
-M <- cor(subset(train_data, select = -c(id)))
+M <- cor(subset(train_data, select = -c(id, target)))
 corrplot(M, order = "hclust", type = "upper")
 ```
 
 ```{r}
 library(caret)
-highCorr <- findCorrelation(descrCorr, 0.90)
+highCorr <- findCorrelation(M, 0.90)
 print(highCorr)
+```
+
+```{r}
+library("randomForest")
+model <- randomForest(target~.,data=subset(train_data, select = -c(id)), importance = T, ntree = 200)
+
 ```
 
