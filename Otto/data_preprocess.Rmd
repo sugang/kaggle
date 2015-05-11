@@ -42,7 +42,7 @@ heatmap.2(as.matrix(subset(train_data, select = -c(id, target))), scale="column"
 
 Logistic model for variable selection
 ```{r}
-model <- lm(target ~ .,data = train_data, select = -c(id))))
+model <- lm(target ~ .,data = subset(train_data, select = -c(id, target)))
 summary(model)
 ```
 
