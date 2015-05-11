@@ -50,3 +50,17 @@ cv.nround <- 500
 
 #gives around 0.475 cross validation error
 bst.cv = xgb.cv(param=param, data = x.train, label = y.train, nfold = 3, nrounds=cv.nround) #this program is kinda buggy sometimes. xgboost still need some work.
+
+for(i in 1:10){
+	print(i)
+	cv.nround <- 550 #550 seem to be optimal
+	bst = xgboost(param=param, data = x.train, label = y.train, nrounds=cv.nround)
+	# bst = xgboost(param=param, data = x.train, label = y.train, nrounds=nround)
+	pred = predict(bst,x[teind,])
+	pred = matrix(pred,9,length(pred)/9)
+	pred = t(pred)
+	# pred = format(pred, digits=2,scientific=F) # shrink the size of submission
+	pred = data.frame(1:nrow(pred),pred)
+	names(pred) = c('id', paste0('Class_',1:9))
+	write.csv(pred,file=paste('20150511_xgboost_slow_learning_', i, '.csv', sep=''), quote=FALSE,row.names=FALSE)
+}
