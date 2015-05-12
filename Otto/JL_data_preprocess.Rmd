@@ -26,13 +26,13 @@ windows.options(reset=TRUE)
 
 PCA analysis
 ```{r}
-train_pca <- prcomp(subset(train_data, select = -c(id, target)), center = TRUE, scale = TRUE) 
+train_pca <- prcomp(subset(train_data, select = -c(id, target)), center = TRUE, scale = TRUE)
 summary(train_pca)
 plot(train_pca)
 biplot(train_pca,choices=c(1,2),cex=0.5, main = "Train data biplot")
 barplot(train_pca$rotation[,"PC1"])
 
-test_pca <- prcomp(subset(test_data, select = -c(id)), center = TRUE, scale = TRUE) 
+test_pca <- prcomp(subset(test_data, select = -c(id)), center = TRUE, scale = TRUE)
 summary(test_pca)
 plot(test_pca)
 biplot(test_pca,choices=c(1,2),cex=0.5, main = "Test data biplot")

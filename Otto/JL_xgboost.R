@@ -44,6 +44,3 @@ submission <- data.frame(id=test_data$id, Class_1=NA, Class_2=NA, Class_3=NA, Cl
 submission[,2:10] <- pre_result_mod
 
 write.csv(submission, quote = F, row.names = F, file = "./predict_result.csv")
-
-
-PredictWithModel(bst, test)
