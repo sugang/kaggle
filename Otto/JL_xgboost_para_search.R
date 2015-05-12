@@ -34,7 +34,7 @@ random_search <- function(n_set){
   # Set necessary parameter
   param <- list("objective" = "multi:softprob",
                 "max_depth"=6,
-#                "eta"=0.1,
+                "eta"=0.1,
                 "subsample"=0.7,
                 "colsample_bytree"= 1,
 #                "gamma"=2,
@@ -47,24 +47,22 @@ random_search <- function(n_set){
   param_list <- list()
   
   for (i in seq(n_set)){
-    
+    para_idx = 1
     ## n_par <- length(param)
-    
-    
 #    param$max_depth <- sample(3:10,1, replace=T)
-    
 #    param$eta <- runif(1,0.01,0.6)
     param$subsample <- seq(0.1,1, length=n_set)[i]
-    param$colsample_bytree <- seq(0.1,1,)
-    param$subsample <- runif(1,0.1,1)
-    param$colsample_bytree <- runif(1,0.1,1)
+    for (j in seq(n_set)){
+      param$colsample_bytree <- seq(0.1,1, length=n_set)[j]
+
+      param_list[[para_idx]] <- param
+      para_idx = para_idx + 1
+    }
+#    param$subsample <- runif(1,0.1,1)
+#    param$colsample_bytree <- runif(1,0.1,1)
 #    param$min_child_weight <- sample(1:17,1, replace=T)
-    
 #    param$gamma <- runif(1,0.1,10)
 #    param$min_child_weight <- sample(1:15,1, replace=T)
-    
-    param_list[[i]] <- param
-    
   }
   
   return(param_list)
@@ -74,7 +72,7 @@ param2 <- random_search(n_set=100)
 
 
 # Run Cross Valication
-cv.nround = 400
+cv.nround = 1000
 TrainRes <- matrix(, nrow=cv.nround, ncol=length(param2))
 TestRes <- matrix(, nrow= cv.nround, ncol=length(param2))
 
