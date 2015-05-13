@@ -41,7 +41,7 @@ grid_search <- function(n_set){
                 "eval_metric" = "mlogloss",
                 "silent"=1,
                 "num_class" = 9,
-                "nthread" = 3)
+                "nthread" = 6)
   
   param_list <- list()
   para_idx = 1
