@@ -19,9 +19,8 @@ x = matrix(as.numeric(x),nrow(x),ncol(x))
 trind = 1:length(y)
 teind = (nrow(train)+1):nrow(x)
 
-
-pre_pro = preProcess(x, method = "BoxCox")
-x = pre_pro(x)
+pre_pro = preProcess(x[trind,], method = "YeoJohnson")
+x = predict(pre_pro, x)
 
 
 # Set necessary parameter
@@ -87,23 +86,6 @@ for(i in 1:length(param2)){
 
 #Saving CV results
 save(TrainRes, TestRes, param2, file = "xgboost_benchmark.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark2.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark3.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark4.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark5.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark6.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark7.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark8.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark9.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark10.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark11.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark12.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark13.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark14.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark15.Rdata")
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark16.Rdata")
-
-load("xgboost_benchmark10.Rdata")
 
 #Converting to data.frame for plotting 
 TestRes_df <- data.frame(TestRes)
