@@ -1,0 +1,9 @@
+The most difficult task is to extract features from the free text.
+Possible ideas:
+
+1) whether the product name / description contain the full search term
+2) percentage of the words in the search term covered
+3) Google word2vect, get a vectorized representation for each word (this way we can compare, exercise | sport are similar)
+4) convert all words to singular forms in python
+5) whether the search terms are of the same order from the product description | 
+6) TFID
