@@ -104,7 +104,7 @@ ggplot(data = TestRes_df, aes(x = 1:1000, y = TestRes_df$X9))+
 # for ensemble method
 param_opt <- list()
 param_idx <- 1
-pred_result = data.frame(matrix(0,9,length(teind)/9))
+pred_result = data.frame(matrix(0,length(teind), 9))
 for(i in 1:length(param2)){
   print(paste0("CV Round", i))
   bst.cv <- xgb.cv(param= param2[[i]], data = x[trind,], label = y, 
@@ -118,7 +118,7 @@ for(i in 1:length(param2)){
     bst = xgboost(param=param2[[3]], data = x[trind,], label = y, nrounds=bst.nrounds)
     pred = predict(bst,x[teind,])
     pred = matrix(pred,ncol = 9,byrow = T)
-    pred_result += pred
+    pred_result = pred + pred_result
   }
 }
 pre_result = pre_result / length(param_opt)
@@ -126,26 +126,16 @@ pre_result = pre_result / length(param_opt)
 
 bst.cv <- xgb.cv(param= param2[[75]], data = x[trind,], label = y, nfold = 3, nrounds=1000)
 
-pred_result = data.frame(matrix(0,9,length(teind)/9))
-for(i in 1:10){
+
+pred_result = data.frame(matrix(0,length(teind), 9))
+for(i in 1:200){
     bst = xgboost(param=param2[[75]], data = x[trind,], label = y, nrounds= 459)
     pred = predict(bst,x[teind,])
     pred = matrix(pred,ncol = 9,byrow = T)
     pred_result = pred + pred_result
 }
 
-
-# Train the model
-nround = 532
-bst = xgboost(param=param2[[3]], data = x[trind,], label = y, nrounds=nround)
-
-# Make prediction
-pred = predict(bst,x[teind,])
-pred = matrix(pred,9,length(pred)/9)
-pred = t(pred)
-
 # Output submission
-pred = format(pred, digits=2,scientific=F) # shrink the size of submission
-pred = data.frame(1:nrow(pred),pred)
-names(pred) = c('id', paste0('Class_',1:9))
-write.csv(pred,file='submission5.csv', quote=FALSE,row.names=FALSE)
+pred_result = data.frame(1:nrow(pred),pred)
+names(pred_result) = c('id', paste0('Class_',1:9))
+write.csv(pred_result,file='submission5.csv', quote=FALSE,row.names=FALSE)
