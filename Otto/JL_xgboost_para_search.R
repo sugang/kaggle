@@ -25,8 +25,8 @@ x = predict(pre_pro, x)
 
 # Set necessary parameter
 
-#Randomly searching for parameters
-random_search <- function(n_set){
+#grid searching for parameters
+grid_search <- function(n_set){
   
   #param is a list of parameters
   
@@ -44,30 +44,20 @@ random_search <- function(n_set){
                 "nthread" = 3)
   
   param_list <- list()
-  
+  para_idx = 1
+
   for (i in seq(n_set)){
-    para_idx = 1
-    ## n_par <- length(param)
-#    param$max_depth <- sample(3:10,1, replace=T)
-#    param$eta <- runif(1,0.01,0.6)
     param$subsample <- seq(0.1,1, length=n_set)[i]
     for (j in seq(n_set)){
-      param$colsample_bytree <- seq(0.1,1, length=n_set)[j]
+      param$colsample_bytree <- seq(0.1, 1, length=n_set)[j]
 
       param_list[[para_idx]] <- param
       para_idx = para_idx + 1
     }
-#    param$subsample <- runif(1,0.1,1)
-#    param$colsample_bytree <- runif(1,0.1,1)
-#    param$min_child_weight <- sample(1:17,1, replace=T)
-#    param$gamma <- runif(1,0.1,10)
-#    param$min_child_weight <- sample(1:15,1, replace=T)
   }
-  
   return(param_list)
-  
 }
-param2 <- random_search(n_set=100)
+param2 <- grid_search(n_set=10)
 
 
 # Run Cross Valication
@@ -85,7 +75,9 @@ for(i in 1:length(param2)){
 }
 
 #Saving CV results
-save(TrainRes, TestRes, param2, file = "xgboost_benchmark.Rdata")
+save(TrainRes, TestRes, param2, file = "./Data/xgboost_benchmark.Rdata")
+
+load("./Data/xgboost_benchmark.Rdata")
 
 #Converting to data.frame for plotting 
 TestRes_df <- data.frame(TestRes)
