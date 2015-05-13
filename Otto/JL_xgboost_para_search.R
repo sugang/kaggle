@@ -79,11 +79,47 @@ save(TrainRes, TestRes, param2, file = "./Data/xgboost_benchmark.Rdata")
 
 load("./Data/xgboost_benchmark.Rdata")
 
+# min in each column
+data.frame(min_val = as.numeric(apply(TrainRes,2,min)), type = "Train")
+AllRes <- rbind(data.frame(idx = 1:sum(AllRes$type == "Train"), min_val = apply(TrainRes,2,min), type = "Train"), data.frame(idx = 1:sum(AllRes$type == "Test"), min_val =apply(TestRes,2,min), type = "Test"))
+ggplot(data = AllRes, aes(x = idx, y = min_val, color = type))+ geom_line() + annotate("text", x = subset(AllRes[AllRes$type == "Test",], min_val == min(min_val))$idx, y = subset(AllRes[AllRes$type == "Test",], min_val == min(min_val))$min_val, label = paste(subset(AllRes[AllRes$type == "Test",], min_val == min(min_val))$idx, subset(AllRes[AllRes$type == "Test",], min_val == min(min_val))$min_val, sep = ","))
+
+library(reshape2)
+TestRes_melt <- melt(TestRes)
+ggplot(data = TestRes_melt, aes(x = Var1, y = value, color = as.factor(Var2))) + geom_line() + scale_x_log10() + scale_y_log10()
+
+subset(AllRes[AllRes$type == "Test",], min_val == min(min_val))$min_val
+
+plot(apply(TrainRes,2,min))
+points(apply(TestRes,2,min))
+
 #Converting to data.frame for plotting 
 TestRes_df <- data.frame(TestRes)
 #Plotting parameter curves
 ggplot(data = TestRes_df, aes(x = 1:1000, y = TestRes_df$X9))+
   geom_line()
+
+
+# for ensemble method
+param_opt <- list()
+param_idx <- 1
+pred_result = data.frame(matrix(0,9,length(teind)/9))
+for(i in 1:length(param2)){
+  print(paste0("CV Round", i))
+  bst.cv <- xgb.cv(param= param2[[i]], data = x[trind,], label = y, 
+                   nfold = 3, nrounds=cv.nround)
+  TrainRes[,i] <- as.numeric(bst.cv[,train.mlogloss.mean])
+  TestRes[,i]  <- as.numeric(bst.cv[,test.mlogloss.mean])
+  if(min(as.numeric(bst.cv[,test.mlogloss.mean])) < 0.47) {
+    param_opt[param_idx] = param2[[i]]
+    param_idx = param_idx + 1
+    bst = xgboost(param=param2[[3]], data = x[trind,], label = y, nrounds=10000, early_stop_round = 4)
+    pred = predict(bst,x[teind,])
+    pred = matrix(pred,ncol = 9,byrow = T)
+    pred_result += pred
+  }
+}
+pre_result = pre_result / length(param_opt)
 
 # Train the model
 nround = 532
