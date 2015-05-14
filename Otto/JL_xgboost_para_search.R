@@ -128,12 +128,30 @@ bst.cv <- xgb.cv(param= param2[[75]], data = x[trind,], label = y, nfold = 3, nr
 
 
 pred_result = data.frame(matrix(0,length(teind), 9))
-for(i in 1:200){
+n_loop = 200
+for(i in 1:n_loop){
     bst = xgboost(param=param2[[75]], data = x[trind,], label = y, nrounds= 459)
     pred = predict(bst,x[teind,])
     pred = matrix(pred,ncol = 9,byrow = T)
     pred_result = pred + pred_result
 }
+pre_result = pre_result / n_loop
+
+rowSums(pre_result[1:10,])
+
+# optimal param with cv < 0.48.
+param_idx = c(33,54,56,59,61,62,63,64,65,66,67,68,70,72,74,75,76,77,79,82,84,85,86,88,91,92,93,94,95,97,98)
+param_nround = c(473,456,402,387,556,528,498,451,452,424,431,409,379,502,481,455,432,447,422,513,472,449,443,432,558,500,507,483,474,451,448)
+pred_result = data.frame(matrix(0,length(teind), 9))
+n_loop = 2
+for(i in 1:n_loop){
+  idx = sample.int(length(param_idx),size=1)
+  bst = xgboost(param=param2[[param_idx[idx]]], data = x[trind,], label = y, nrounds= param_nround[idx])
+  pred = predict(bst,x[teind,])
+  pred = matrix(pred,ncol = 9,byrow = T)
+  pred_result = pred + pred_result
+}
+
 
 # Output submission
 pred_result = data.frame(1:nrow(pred),pred)
