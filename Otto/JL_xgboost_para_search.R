@@ -154,6 +154,9 @@ for(i in 1:n_loop){
 
 
 # Output submission
-pred_result = data.frame(1:nrow(pred),pred)
+pred_result = data.frame(1:nrow(pred_result),pred_result)
 names(pred_result) = c('id', paste0('Class_',1:9))
 write.csv(pred_result,file='submission5.csv', quote=FALSE,row.names=FALSE)
+
+save(pred_result, param2, file = "./Data/xgboost_53.Rdata")
+
