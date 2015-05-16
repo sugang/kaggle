@@ -54,6 +54,16 @@ model_list <- caretList(
 model_list$glm
 model_list$rpart
 
+####### be careful about this part!!!
+models <- caretList(
+  x=iris[1:50,1:2],
+  y=iris[1:50,3],
+  trControl=trainControl(method='cv'),
+  methodList=c('rpart', 'glm')
+)
+caretStack(models, method='glm')
+
+
 xyplot(resamples(model_list))
 
 modelCor(resamples(model_list))
