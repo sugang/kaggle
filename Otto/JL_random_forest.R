@@ -8,6 +8,12 @@
 
 #The evaluation metric function used by caret to score
 #a fold. Not optimal - needs vectorization
+
+##### for multiple process
+library(doMC)
+registerDoMC(cores = 4)
+
+
 MCLogLoss <- function(data, lev = NULL, model = NULL)  {
   
   obs <- model.matrix(~data$obs - 1)
@@ -67,15 +73,14 @@ target2 <- allTarget[-trainIndex$Resample1]
 
 #Build a randomForest using first training set
 fc <- trainControl(method = "repeatedCV", 
-                   number = 2, 
-                   repeats = 5, 
+                   number = 3, 
+                   repeats = 3, 
                    verboseIter=FALSE, 
                    returnResamp="all", 
                    classProbs=TRUE,
                    summaryFunction=MCLogLoss) 
 tGrid <- expand.grid(mtry = 2:RF_MTRY) 
-model <- train(x = train, y = target, method = "rf", 
-               trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
+model <- train(x = train, y = target, method = "rf", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
 #Predict second training set, and test set using the randomForest
 train2Preds <- predict(model, train2, type="prob") 
 testPreds <- predict(model, test, type="prob")
@@ -84,19 +89,31 @@ model$finalModel
 
 # for RRF
 fc <- trainControl(method = "repeatedCV", 
-                   number = 2, 
-                   repeats = 5, 
+                   number = 3, 
+                   repeats = 3, 
+                   verboseIter=TRUE, 
+                   returnResamp="all", 
+                   classProbs=TRUE,
+                   summaryFunction=MCLogLoss) 
+tGrid <- expand.grid(mtry = 2:7, coefReg = seq(0.01, 1, length = 5), coefImp = seq(0, 1, length = 5))
+model <- train(target ~., data = train, method = "RRF", trControl = fc, tuneLength = 5, metric = "MCLogLoss", ntree = 600) 
+#Predict second training set, and test set using the randomForest
+train2Preds <- predict(model, train2, type="prob") 
+testPreds <- predict(model, test, type="prob")
+model$finalModel
+
+
+# for extra tree
+fc <- trainControl(method = "repeatedCV", 
+                   number = 3, 
+                   repeats = 3, 
                    verboseIter=FALSE, 
                    returnResamp="all", 
                    classProbs=TRUE,
                    summaryFunction=MCLogLoss) 
 tGrid <- expand.grid(mtry = 2:7, coefReg = seq(0.01, 1, length = 5), coefImp = seq(0, 1, length = 5))) 
-model <- train(x = train, y = target, method = "RRF", 
-               trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
-#Predict second training set, and test set using the randomForest
-train2Preds <- predict(model, train2, type="prob") 
-testPreds <- predict(model, test, type="prob")
-model$finalModel
+test_eTree <- train(target~., data=train, method = "extraTrees", tuneLength = 4, trControl = fitControl, preProc = "YeoJohnson", ntree = 1000)
+
 
 
 #Build a gbm using only the predictions of the

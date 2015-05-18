@@ -4,13 +4,19 @@ train <- read.csv("./Data/train.csv")
 test <- read.csv("./Data/test.csv")
 
 ##### for multiple process
+# not working for windows
 library(doMC)
 registerDoMC(cores = 4)
+# for windows
+library(doSNOW) 
+registerDoSNOW(cl = 3)
 
 ##### caret ensemble package ####
 library("caretEnsemble")
 
 MCLogLoss <- function(data, lev = NULL, model = NULL)  {
+  
+  browser()
   
   obs <- model.matrix(~data$obs - 1)
   preds <- data[, 3:(ncol(data) - 1)]
@@ -28,6 +34,7 @@ MCLogLoss <- function(data, lev = NULL, model = NULL)  {
   }
   out <- err / nrow(obs) * -1
   names(out) <- c("MCLogLoss")
+  print(out)
   out
 }
 
@@ -85,25 +92,34 @@ summary(greedy_ensemble)
 library("caret")
 fitControl <- trainControl(
   method = "repeatedcv",
-  number = 10,
-  repeats = 10,
+  number = 3,
+  repeats = 3,
   summaryFunction=MCLogLoss, 
   savePredictions=TRUE,
   returnData = TRUE,
   verboseIter = TRUE)
-test_eTree <- train(target~., data=train, method = "extraTrees", trControl = fitControl, preProc = "YeoJohnson", ntree = 200)
+test_eTree <- train(target~., data=train, method = "extraTrees", tuneLength = 3, trControl = fitControl, preProc = "YeoJohnson", ntree = 600)
+
+test_eTree <- train(target~., data=subset(train, select = -id), method = "rf", tuneLength = 3, trControl = fitControl, preProc = "YeoJohnson", ntree = 600)
+
+model <- train(x = train, y = target, method = "rf", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
 
 
 fitControl <- trainControl(
   method = "repeatedcv",
-  number = 10,
-  repeats = 10,
+  number = 3,
+  repeats = 3,
   classProbs = TRUE,
   summaryFunction=MCLogLoss, 
   savePredictions=TRUE,
   returnData = TRUE,
   verboseIter = TRUE)
-test_eTree <- train(target~., data=train, method = "rf", trControl = fitControl, preProc = "YeoJohnson", ntree = 200)
+rforest <- train(target~., data=train, method = "rf", trControl = fitControl, preProc = "YeoJohnson", ntree = 200)
+
+pred = predict(rforest$finalModel,test, type="prob")
+pred_result = data.frame(1:nrow(pred),pred)
+names(pred_result) = c('id', paste0('Class_',1:9))
+write.csv(pred_result,file='submission5.csv', quote=FALSE,row.names=FALSE)
 
 
 ###### Over sampling of minority class

@@ -126,7 +126,6 @@ pre_result = pre_result / length(param_opt)
 
 bst.cv <- xgb.cv(param= param2[[75]], data = x[trind,], label = y, nfold = 3, nrounds=1000)
 
-
 pred_result = data.frame(matrix(0,length(teind), 9))
 n_loop = 200
 for(i in 1:n_loop){
