@@ -90,9 +90,10 @@ fc <- trainControl(method = "repeatedCV",
                    returnResamp="all", 
                    classProbs=TRUE,
                    summaryFunction=MCLogLoss) 
-tGrid <- expand.grid(mtry = 2:7, coefReg = seq(0.01, 1, length = 5), coefImp = seq(0, 1, length = 5))) 
-model <- train(x = train, y = target, method = "RRF", 
-               trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
+tGrid <- expand.grid(mtry = 2:7, coefReg = seq(0.01, 1, length = 5), coefImp = seq(0, 1, length = 5)) 
+model <- train(x = train, y = target, method = "RRF", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
+model <- train(target ~ . , dat = subset(train, select = -id), method = "RRF", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
+
 #Predict second training set, and test set using the randomForest
 train2Preds <- predict(model, train2, type="prob") 
 testPreds <- predict(model, test, type="prob")
