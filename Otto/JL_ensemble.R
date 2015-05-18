@@ -1,7 +1,7 @@
 #
 #
 #
-
+##################### first attempt for ensemble
 dl = read.csv('./Data/20150514_deep_learning_final.csv',header=TRUE,stringsAsFactors = F)
 gb = read.csv('./Data/20150511_xgboost_slow_learning_final.csv',header=TRUE,stringsAsFactors = F)
 ensemble_d_g = (dl + 3*gb) / 4
@@ -30,12 +30,12 @@ target2 <- alltarget[-trainIndex$Resample1]
 
 train_xg <- subset(train, select = -target)
 train_nn <- train
+train2_bk <- train2
 ###########################################################
 ##########   The part for neural network        ###########
 ###########################################################
 library("h2o")
 
-train <- train_nn
 localH2O <- h2o.init(nthread = 8)
 
 for(i in 1:93){
@@ -43,7 +43,13 @@ for(i in 1:93){
   train[,i] <- sqrt(train[,i]+(3/8))
 }
 
-test = train2
+for(i in 1:93){
+  train2[,i] <- as.numeric(train2[,i])
+  train2[,i] <- sqrt(train2[,i]+(3/8))
+}
+
+test <- read.csv("./Data/test.csv")
+test <- test[,-1]
 
 for(i in 1:93){
   test[,i] <- as.numeric(test[,i])
@@ -51,15 +57,17 @@ for(i in 1:93){
 }
 
 train.hex <- as.h2o(localH2O,train)
+train2.hex <- as.h2o(localH2O,train2)
 test.hex <- as.h2o(localH2O,test)
 
 predictors <- 2:(ncol(train.hex)-1)
 response <- ncol(train.hex)
 
-submission <- read.csv("./Data/sampleSubmission.csv")
-submission[,2:10] <- 0
+train2_pred <- matrix(0, nrow(train2), 9)
+test_pred <- matrix(0, nrow(test), 9)
 
-for(i in 1:30){
+nloop = 1
+for(i in 1:nloop){
   print(i)
   model <- h2o.deeplearning(x=predictors,
                             y=response,
@@ -77,27 +85,33 @@ for(i in 1:30){
                             train_samples_per_iteration=2000,
                             max_w2=10,
                             seed=1)
-  submission[,2:10] <- submission[,2:10] + as.data.frame(h2o.predict(model,test.hex))[,2:10]
+  train2_pred <- train2_pred + as.data.frame(h2o.predict(model,train2.hex))[,2:10]
+  test_pred <- test_pred + as.data.frame(h2o.predict(model,test.hex))[,2:10]
   print(i)
 }      
 
-train2Pred_nn <- submission
+train2Pred_nn <- train2_pred / nloop
+test2Pred_nn <- test_pred / nloop
 
 ###########################################################
 ##########   The part for xgboost               ###########
 ###########################################################
 library(xgboost)
 train = train_xg
+train2 = train2_bk
 y = train[,ncol(train)]
 y = gsub('Class_','',target)
 y = as.integer(y)-1 #xgboost take features in [0,numOfClass)
 
-x = rbind(train,subset(train2, select = -target))
+test <- read.csv("./Data/test.csv")
+test <- test[,-1]
+
+x = rbind(train,subset(train2, select = -target), test)
 x = as.matrix(x)
 x = matrix(as.numeric(x),nrow(x),ncol(x))
 trind = 1:length(y)
-teind = (nrow(train)+1):nrow(x)
-
+teind = (nrow(train)+1):(nrow(train)+nrow(train2))
+testind = (nrow(train)+nrow(train2)+1) : nrow(x)
 
 #grid searching for parameters
 grid_search <- function(n_set){
@@ -132,6 +146,10 @@ grid_search <- function(n_set){
   return(param_list)
 }
 param2 <- grid_search(n_set=10)
+
+# for test set
+
+pre_test    = data.frame(matrix(0,nrow(test), 9))
 
 bst.cv <- xgb.cv(param= param2[[75]], data = x[trind,], label = y, nfold = 3, nrounds=700)
 pred_result = data.frame(matrix(0,length(teind), 9))
