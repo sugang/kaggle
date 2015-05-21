@@ -36,7 +36,7 @@ train2_bk <- train2
 ###########################################################
 library("h2o")
 
-localH2O <- h2o.init(nthread = 8)
+localH2O <- h2o.init(nthread = 6)
 
 for(i in 1:93){
   train[,i] <- as.numeric(train[,i])
@@ -66,7 +66,7 @@ response <- ncol(train.hex)
 train2_pred <- matrix(0, nrow(train2), 9)
 test_pred <- matrix(0, nrow(test), 9)
 
-nloop = 1
+nloop = 5
 for(i in 1:nloop){
   print(i)
   model <- h2o.deeplearning(x=predictors,
@@ -113,59 +113,66 @@ trind = 1:length(y)
 teind = (nrow(train)+1):(nrow(train)+nrow(train2))
 testind = (nrow(train)+nrow(train2)+1) : nrow(x)
 
-#grid searching for parameters
-grid_search <- function(n_set){
-  
-  #param is a list of parameters
-  
-  # Set necessary parameter
-  param <- list("objective" = "multi:softprob",
-                "max_depth"=6,
-                "eta"=0.1,
-                "subsample"=0.7,
-                "colsample_bytree"= 1,
-                #                "gamma"=2,
-                #                "min_child_weight"=4,
-                "eval_metric" = "mlogloss",
-                "silent"=1,
-                "num_class" = 9,
-                "nthread" = 6)
-  
-  param_list <- list()
-  para_idx = 1
-  
-  for (i in seq(n_set)){
-    param$subsample <- seq(0.1,1, length=n_set)[i]
-    for (j in seq(n_set)){
-      param$colsample_bytree <- seq(0.1, 1, length=n_set)[j]
-      
-      param_list[[para_idx]] <- param
-      para_idx = para_idx + 1
-    }
-  }
-  return(param_list)
-}
-param2 <- grid_search(n_set=10)
+# parameter from forum
+param_f <- list("objective" = "multi:softprob",
+              "eval_metric" = "mlogloss",
+              "num_class" = 9,
+              "gamma" = 0,
+              "nthread" = 4,
+              "eta" = 0.05,
+              "max_depth" = 12,
+              "min_child_weight" = 4,
+              "subsample" = .9,
+              "colsample_bytree" = .8)
 
 # for test set
-
-pre_test    = data.frame(matrix(0,nrow(test), 9))
-
-bst.cv <- xgb.cv(param= param2[[75]], data = x[trind,], label = y, nfold = 3, nrounds=700)
+pred_test   = data.frame(matrix(0,length(testind), 9))
+# for train2
 pred_result = data.frame(matrix(0,length(teind), 9))
-n_loop = 200
+
+bst.cv <- xgb.cv(param= param_f, data = x[trind,], label = y, nfold = 3, nrounds=800)
+#bst.cv <- xgb.cv(param= param_f, data = x[trind,], label = y, nfold = 3, nrounds=200)
+n_loop = 30
 for(i in 1:n_loop){
-  bst = xgboost(param=param2[[75]], data = x[trind,], label = y, nrounds= which.min(bst.cv[,test.mlogloss.mean]))
+  bst = xgboost(param=param_f, data = x[trind,], label = y, nrounds= which.min(bst.cv[,test.mlogloss.mean]))
   pred = predict(bst,x[teind,])
   pred = matrix(pred,ncol = 9,byrow = T)
   pred_result = pred + pred_result
+  pred = predict(bst,x[testind,])
+  pred = matrix(pred,ncol = 9,byrow = T)
+  pred_test = pred + pred_test
 }
 
-train2Pred_xg = pre_result / n_loop
+train2Pred_xg = pred_result / n_loop
+testPred_xg = pred_test / n_loop
 
 ####################################################
 ######### Ensemble by gbm                 ##########
 ####################################################
+MCLogLoss <- function(data, lev = NULL, model = NULL)  {
+  
+  obs <- model.matrix(~data$obs - 1)
+  preds <- data[, 3:(ncol(data) - 1)]
+  
+  err = 0
+  for(ob in 1:nrow(obs))
+  {
+    for(c in 1:ncol(preds))
+    {
+      p <- preds[ob, c]
+      p <- min(p, 1 - 10e-15)
+      p <- max(p, 10e-15)
+      err = err + obs[ob, c] * log(p)
+    }
+  }
+  
+  out <- err / nrow(obs) * -1
+  names(out) <- c("MCLogLoss")
+  out
+}
+
+test <- read.csv("./Data/test.csv")
+test <- test[,-1]
 
 #Build a gbm using only the predictions of the
 #randomForest on second training set
@@ -176,5 +183,14 @@ fc <- trainControl(method = "repeatedCV",
                    returnResamp="all", 
                    classProbs=TRUE, 
                    summaryFunction=MCLogLoss,) 
-tGrid <- expand.grid(interaction.depth = GBM_IDEPTH, shrinkage = GBM_SHRINKAGE, n.trees = GBM_TREES, n.minobsinnode = GBM_MINOBS) 
-model2 <- train(x = cbind(train2Pred_xg, train2Pred_nn), y = target2, method = "gbm", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", verbose = FALSE)
+model2 <- train(x = data.frame(cbind(train2_bk, train2Pred_xg, train2Pred_nn)), y = target2, method = "gbm", trControl = fc, tuneLength = 5, metric = "MCLogLoss", verbose = FALSE)
+
+
+
+model2 <- train(x = data.frame(cbind(train2_bk, train2Pred_xg, train2Pred_nn)), y = target2, method = modelinfo, trControl = fc, tuneLength = 10, metric = "MCLogLoss", verbose = FALSE)
+
+
+
+submit <- predict(model2, cbind(test, testPred_xg, testPred_nn), type="prob")
+submit <- cbind(id=1:nrow(testPred_xg), submit)
+write.csv(submit, "submit.csv", row.names=FALSE)
