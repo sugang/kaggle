@@ -10,10 +10,10 @@ registerDoMC(cores = 4)
 ##### caret ensemble package ####
 library("caretEnsemble")
 
-MCLogLoss <- function(data, lev = NULL, model = NULL)  {
+MCLogLoss <- function(dat, lev = NULL, model = NULL)  {
   
-  obs <- model.matrix(~data$obs - 1)
-  preds <- data[, 3:(ncol(data) - 1)]
+  obs <- model.matrix(~dat$obs - 1)
+  preds <- dat[, 3:(ncol(dat) - 1)]
   
   err = 0
   for(ob in 1:nrow(obs))

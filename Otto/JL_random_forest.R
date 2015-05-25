@@ -67,15 +67,16 @@ target2 <- allTarget[-trainIndex$Resample1]
 
 #Build a randomForest using first training set
 fc <- trainControl(method = "repeatedCV", 
-                   number = 2, 
-                   repeats = 5, 
+                   number = 3, 
+                   repeats = 3, 
                    verboseIter=FALSE, 
                    returnResamp="all", 
                    classProbs=TRUE,
                    summaryFunction=MCLogLoss) 
 tGrid <- expand.grid(mtry = 2:RF_MTRY) 
-model <- train(x = train, y = target, method = "rf", 
-               trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
+model <- train(x = train, y = target, method = "rf", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", ntree = RF_TREES) 
+
+test_eTree <- train(target~., data=train, method = "extraTrees", trControl = fc, tunningLength = 4, metric = "MCLogLoss", preProc = "YeoJohnson", ntree = 1000)
 #Predict second training set, and test set using the randomForest
 train2Preds <- predict(model, train2, type="prob") 
 testPreds <- predict(model, test, type="prob")
@@ -112,6 +113,19 @@ tGrid <- expand.grid(interaction.depth = GBM_IDEPTH, shrinkage = GBM_SHRINKAGE, 
 model2 <- train(x = train2, y = target2, method = "gbm", trControl = fc, tuneGrid = tGrid, metric = "MCLogLoss", verbose = FALSE)
 model2
 hist(model2$resample$MCLogLoss)
+
+####### extra trees
+#Build a randomForest using first training set
+fc <- trainControl(method = "repeatedCV", 
+                   number = 3, 
+                   repeats = 3, 
+                   verboseIter=FALSE, 
+                   returnResamp="all", 
+                   classProbs=TRUE,
+                   summaryFunction=MCLogLoss) 
+tGrid <- expand.grid(mtry = 2:RF_MTRY) 
+test_eTree <- train(target~., data=train, method = "extraTrees", trControl = fc, tunningLength = 4, metric = "MCLogLoss", preProc = "YeoJohnson", ntree = 1000)
+
 
 #Build submission
 submit <- predict(model2, testPreds, type="prob") 
