@@ -20,7 +20,7 @@ for(i in 2:94){
 
 
 train.hex <- as.h2o(localH2O,train)
-test.hex <- as.h2o(localH2O,test[,2:94])
+test.hex <- as.h2o(localH2O,test[,1:93])
 
 predictors <- 2:(ncol(train.hex)-1)
 response <- ncol(train.hex)
@@ -28,7 +28,7 @@ response <- ncol(train.hex)
 submission <- read.csv("./Data/sampleSubmission.csv")
 submission[,2:10] <- 0
 
-for(i in 1:20){
+for(i in 1:30){
   print(i)
   model <- h2o.deeplearning(x=predictors,
                             y=response,
@@ -48,5 +48,6 @@ for(i in 1:20){
                             seed=1)
   submission[,2:10] <- submission[,2:10] + as.data.frame(h2o.predict(model,test.hex))[,2:10]
   print(i)
-  write.csv(submission,file="submission.csv",row.names=FALSE) 
 }      
+
+nnet <- submission
